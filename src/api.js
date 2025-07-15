@@ -1,7 +1,7 @@
 // src/api.js
 
 // fragments microservice API to use, defaults to localhost:8080 if not set in env
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 /**
  * Given an authenticated user, request all fragments for this user from the
@@ -11,7 +11,7 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 export async function getUserFragments(user) {
   console.log('Requesting user fragments data...');
   try {
-    const res = await fetch(`${apiUrl}/v1/fragments`, {
+    const res = await fetch(`${apiUrl}/v1/fragments?expand=1`, {
       // Generate headers with the proper Authorization bearer token to pass.
       // We are using the `authorizationHeaders()` helper method we defined
       // earlier, to automatically attach the user's ID token.
@@ -24,26 +24,30 @@ export async function getUserFragments(user) {
     console.log('Successfully got user fragments data', { data });
     return data;
   } catch (err) {
-    console.error('Unable to call GET /v1/fragment', { err });
+    console.error('Unable to call GET /v1/fragments', { err });
   }
 }
 
 // Create a new text fragment for the authenticated user
-export async function createFragment(user, text) {
+export async function createFragment(user, data, type = 'text/plain') {
   console.log('Creating new fragment...');
   try {
+    const body = type === 'application/json' ? JSON.stringify(data) : data;
     const res = await fetch(`${apiUrl}/v1/fragments`, {
       method: 'POST',
-      headers: user.authorizationHeaders('text/plain'),
-      body: text,
+      headers: user.authorizationHeaders(type),
+      body,
     });
+
     if (!res.ok) {
       throw new Error(`${res.status} ${res.statusText}`);
     }
-    const data = await res.json();
+
+    const result = await res.json();
     const location = res.headers.get('Location');
-    console.log('Successfully created fragment', { data, location });
-    return { data, location };
+    console.log('Successfully created fragment', { result, location });
+    return { result, location };
+    
   } catch (err) {
     console.error('Unable to call POST /v1/fragments', { err });
   }

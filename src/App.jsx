@@ -8,6 +8,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [fragments, setFragments] = useState([]);
   const [newText, setNewText] = useState('');
+  const [newType, setNewType] = useState('text/plain');
 
   useEffect(() => {
     async function init() {
@@ -15,7 +16,6 @@ export default function App() {
       if (user) {
         setUser(user);
 
-        // ✅ fetch fragments only when logged in
         const data = await getUserFragments(user);
         setFragments(data.fragments || []);
       }
@@ -27,10 +27,11 @@ export default function App() {
   async function handleCreateFragment(e) {
     e.preventDefault();
     if (!newText.trim()) return;
-    await createFragment(user, newText);
+    await createFragment(user, newText, newType);
     const data = await getUserFragments(user);
     setFragments(data.fragments || []);
     setNewText('');
+    setNewType('text/plain');
   }
 
   return (
@@ -55,13 +56,28 @@ export default function App() {
             <ul>
               {fragments.length === 0 && <li>No fragments yet.</li>}
               {fragments.map((frag, i) => (
-                <li key={i}>{frag}</li>
+                typeof frag === 'string' ? (
+                  <li key={i}>{frag}</li>
+                ) : (
+                  <li key={i}>
+                    {frag.id} - Created on{' '}
+                    {new Date(frag.created).toLocaleString()}
+                  </li>
+                )
               ))}
             </ul>
           </section>
           <section>
-            <h3>Create Text Fragment</h3>
+            <h3>Create Fragment</h3>
             <form onSubmit={handleCreateFragment}>
+              <label>
+                Type:
+                <select value={newType} onChange={(e) => setNewType(e.target.value)}>
+                  <option value="text/plain">text/plain</option>
+                  <option value="text/markdown">text/markdown</option>
+                  <option value="application/json">application/json</option>
+                </select>
+              </label>
               <textarea
                 rows="4"
                 value={newText}
