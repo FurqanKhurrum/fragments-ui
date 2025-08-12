@@ -24,7 +24,6 @@ export async function signIn() {
 
 // Create a simplified view of the user, with an extra method for creating the auth headers
 function formatUser(user) {
-  console.log('User Authenticated', { user });
   return {
     // If you add any other profile scopes, you can include them here
     username: user.profile['cognito:username'],
